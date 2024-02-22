@@ -12,11 +12,11 @@ def change_extension(input_dir, old_ext, new_ext):
             os.rename(old_path, new_path)
 
             # 확장자 변경 (ffmpeg 이용)
-            subprocess.run(['ffmpeg', '-i', new_path, new_path])
+            # subprocess.run(['ffmpeg', '-i', new_path, new_path])
 
 # 디렉토리 경로, 변경 전 확장자, 변경 후 확장자 설정
-input_directory = '/path/to/your/directory'
-old_extension = 'avi'  # 현재 사용 중인 확장자
+input_directory = '..//resource//video'
+old_extension = 'MTS'  # 현재 사용 중인 확장자
 new_extension = 'mp4'  # 변경할 확장자
 
 # 함수 호출
