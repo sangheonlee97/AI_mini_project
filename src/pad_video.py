@@ -1,6 +1,7 @@
 import cv2
 import os
 import numpy as np
+import pandas as pd
 
 def extract_frames(input_dir, output_dir, target_frame_count):
     for filename in os.listdir(input_dir):
@@ -45,6 +46,10 @@ def extract_frames(input_dir, output_dir, target_frame_count):
     cv2.destroyAllWindows()
 
 # Example usage
+map_csv = pd.read_csv('../resource/tokend_word.csv')
+ma = map_csv[map_csv['번호'] > 9999]
+print(ma)
 input_video_dir = '../resource/video_standardized_7050/'
 output_image_dir = '../resource/test_pad/test/'
-extract_frames(input_video_dir, output_image_dir, target_frame_count=151)
+
+# extract_frames(input_video_dir, output_image_dir, target_frame_count=151)
