@@ -6,7 +6,11 @@ def extract_frames(input_dir, output_dir, target_frame_count):
     for filename in os.listdir(input_dir):
         if filename.endswith('.mp4'):
             input_path = os.path.join(input_dir, filename)
-            output_path = os.path.join(output_dir, filename.split('.')[0])
+            video_name = filename[:5]  # Extract first 5 characters of the video name
+            output_subdir = os.path.join(output_dir, video_name)
+
+            # Create a subdirectory if it doesn't exist
+            os.makedirs(output_subdir, exist_ok=True)
 
             # Open video file
             cap = cv2.VideoCapture(input_path)
@@ -26,7 +30,7 @@ def extract_frames(input_dir, output_dir, target_frame_count):
 
             # Padding with the first frame if necessary
             for i in range(padding_frames):
-                cv2.imwrite(f"{output_path}_frame{i}.png", first_frame)
+                cv2.imwrite(f"{output_subdir}/{video_name}_frame{i}.png", first_frame)
 
             # Read and write frames
             for i in range(current_frame_count):
@@ -35,7 +39,7 @@ def extract_frames(input_dir, output_dir, target_frame_count):
                     break
 
                 # Write the frame as an image
-                cv2.imwrite(f"{output_path}_frame{i + padding_frames}.png", frame)
+                cv2.imwrite(f"{output_subdir}/{video_name}_frame{i + padding_frames}.png", frame)
 
     # Release everything when done
     cv2.destroyAllWindows()
