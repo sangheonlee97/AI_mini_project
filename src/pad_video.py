@@ -45,6 +45,6 @@ def extract_frames(input_dir, output_dir, target_frame_count):
     cv2.destroyAllWindows()
 
 # Example usage
-input_video_dir = '../resource/test/'
-output_image_dir = '../resource/test_pad/'
-extract_frames(input_video_dir, output_image_dir, target_frame_count=150)
+input_video_dir = '../resource/video_standardized_7050/'
+output_image_dir = '../resource/test_pad/test/'
+extract_frames(input_video_dir, output_image_dir, target_frame_count=151)
