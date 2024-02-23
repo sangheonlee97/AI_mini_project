@@ -2,24 +2,28 @@ import cv2
 import os
 import numpy as np
 import pandas as pd
-
-def extract_frames(input_dir, output_dir, target_frame_count):
+import re
+    
+def extract_frames(input_dir, output_dir, target_frame_count, map_csv):
     for filename in os.listdir(input_dir):
         if filename.endswith('.mp4'):
             input_path = os.path.join(input_dir, filename)
-            video_name = filename[:5]  # Extract first 5 characters of the video name
-            output_subdir = os.path.join(output_dir, video_name)
+            match = re.match(r'\d+', filename)
+            if match:
+                video_name = match.group()
+                s = map_csv[map_csv['번호'] == int(video_name)]['한국어']
+                print(s.values)
+                video_word = str(s.iloc[0])
+            else:
+                continue
+
+            output_subdir = os.path.join(output_dir, video_word)
 
             # Create a subdirectory if it doesn't exist
             os.makedirs(output_subdir, exist_ok=True)
 
             # Open video file
             cap = cv2.VideoCapture(input_path)
-
-            # Get video properties
-            width = int(cap.get(3))
-            height = int(cap.get(4))
-            fps = cap.get(5)
 
             # Determine target frame count for padding
             current_frame_count = int(cap.get(7))  # Get total number of frames
@@ -47,9 +51,7 @@ def extract_frames(input_dir, output_dir, target_frame_count):
 
 # Example usage
 map_csv = pd.read_csv('../resource/tokend_word.csv')
-ma = map_csv[map_csv['번호'] > 9999]
-print(ma)
 input_video_dir = '../resource/video_standardized_7050/'
 output_image_dir = '../resource/test_pad/test/'
-
-# extract_frames(input_video_dir, output_image_dir, target_frame_count=151)
+# print(map_csv[map_csv['번호'] == 100]['한국어'])
+extract_frames(input_video_dir, output_image_dir, target_frame_count=200+1, map_csv=map_csv)
