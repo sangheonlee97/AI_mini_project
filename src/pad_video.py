@@ -5,6 +5,7 @@ import pandas as pd
 import re
     
 def extract_frames(input_dir, output_dir, target_frame_count, map_csv):
+    c = 0
     for filename in os.listdir(input_dir):
         if filename.endswith('.mp4'):
             input_path = os.path.join(input_dir, filename)
@@ -16,7 +17,7 @@ def extract_frames(input_dir, output_dir, target_frame_count, map_csv):
                 video_word = str(s.iloc[0])
             else:
                 continue
-
+            c += 1
             output_subdir = os.path.join(output_dir, video_word)
 
             # Create a subdirectory if it doesn't exist
@@ -45,13 +46,16 @@ def extract_frames(input_dir, output_dir, target_frame_count, map_csv):
 
                 # Write the frame as an image
                 cv2.imwrite(f"{output_subdir}/{video_name}_frame{i + padding_frames}.png", frame)
+            print(c)
+            
 
     # Release everything when done
     cv2.destroyAllWindows()
+    print(c)
 
 # Example usage
 map_csv = pd.read_csv('../resource/tokend_word.csv')
 input_video_dir = '../resource/video_standardized_7050/'
-output_image_dir = '../resource/test_pad/test/'
+output_image_dir = '../resource/test_pad/train/'
 # print(map_csv[map_csv['번호'] == 100]['한국어'])
-extract_frames(input_video_dir, output_image_dir, target_frame_count=200+1, map_csv=map_csv)
+extract_frames(input_video_dir, output_image_dir, target_frame_count=210+1, map_csv=map_csv)
