@@ -8,6 +8,7 @@ from keras.layers import Dense, Conv2D, TimeDistributed, LSTM, Flatten, Reshape
 from keras.utils import img_to_array
 from keras.preprocessing.image import ImageDataGenerator
 from sklearn.metrics import f1_score, accuracy_score
+from keras.callbacks import EarlyStopping
 import matplotlib.pyplot as plt
 from collections import Counter
 
@@ -19,7 +20,7 @@ imgdatagen = ImageDataGenerator(
     rescale=1/255.
     
 )
-frame_size = 200
+frame_size = 210
 
 train_data = imgdatagen.flow_from_directory(
                 image_path,
@@ -66,7 +67,7 @@ length = len(train_data.class_indices)
 print(y_train)
 print(test_data_map)
 
-real_y_train = return_real_word(y_train, train_data_map)      # 폴더 순서대로 분류돼있던 클래스를  디렉토리 이름으로 변환해주는 함수
+# real_y_train = return_real_word(y_train, train_data_map)      # 폴더 순서대로 분류돼있던 클래스를  디렉토리 이름으로 변환해주는 함수
 # print(real_y_train)
 
 
@@ -84,11 +85,15 @@ model.add(LSTM(32,))
 model.add(Dense(64, activation='swish'))
 model.add(Dense(32, activation='swish'))
 model.add(Dense(length, activation='softmax'))
-
+# batch_normalizaton 추가 예정
 model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-model.fit(X_train, y_train, epochs=20, batch_size=frame_size, ) #shuffle=False)
 
-y_pred = model.predict(X_test)
+model.summary()
+es = EarlyStopping(monitor='val_loss', patience=10, verbose=1, mode='min', restore_best_weights=True)
+model.fit(X_train, y_train, epochs=30, batch_size=42, shuffle=False, validation_data=(X_test, y_test), validation_batch_size=42, callbacks=[es])
+
+
+y_pred = model.predict(X_test, batch_size=42)
 y_pred = np.argmax(y_pred, axis=1)
 
 def seperate_pred(y_pred, fs):
