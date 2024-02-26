@@ -9,6 +9,7 @@ from keras.layers import Dense, Conv2D, TimeDistributed, LSTM, Flatten, Reshape
 from keras.utils import img_to_array
 from keras.preprocessing.image import ImageDataGenerator
 from sklearn.metrics import f1_score, accuracy_score
+from sklearn.model_selection import train_test_split
 from keras.callbacks import EarlyStopping
 import matplotlib.pyplot as plt
 from collections import Counter
@@ -17,7 +18,7 @@ start_time = time.time()
 image_path = "../resource/test_pad/train/"
 
 frame_size = 210
-
+sequence_len = frame_size
 def return_real_word(y_pred, map):      # 폴더 순서대로 분류돼있던 클래스를  디렉토리 이름으로 변환해주는 함수
     temp = []
     for v in y_pred:
@@ -37,28 +38,59 @@ with open('test_data_map.json', 'r') as json_file:          ### 딕셔너리 불
 
 length = len(train_data_map)
 
-model = Sequential()
-model.add(Conv2D(64, (3, 3), input_shape=(70, 50, 3), activation='swish'))
-model.add(Conv2D(128, (3, 3), activation='swish' ))
-model.add(Conv2D(64, (3, 3), activation='swish'))
-# model.add(Conv2D(32, (3, 3), activation='swish'))
-model.add(Conv2D(frame_size, (3, 3), activation='swish'))
-model.add(Reshape(target_shape=(frame_size, -1)))
-model.add(LSTM(32,))
-model.add(Dense(64, activation='swish'))
-model.add(Dense(32, activation='swish'))
-model.add(Dense(length, activation='softmax'))
-# batch_normalizaton 추가 예정
-model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+def create_model():
+    CNN_model = Sequential()
+    CNN_model.add(Conv2D(64, (3, 3), padding='same', input_shape=(70, 50, 3), activation='swish'))
+    CNN_model.add(Conv2D(128, (3, 3), activation='swish' ))
+    CNN_model.add(Conv2D(64, (3, 3), activation='swish'))
+    # CNN_model.add(Conv2D(frame_size, (3, 3), activation='swish'))
 
-model.summary()
-# es = EarlyStopping(monitor='val_loss', patience=10, verbose=1, mode='min', restore_best_weights=True)
-es = EarlyStopping(monitor='loss', patience=5, verbose=1, mode='min', restore_best_weights=True)
-model.fit(X_train, y_train, epochs=5, batch_size=10, shuffle=False, callbacks=[es])
-# model.fit(X_train, y_train, epochs=30, batch_size=42, shuffle=False, validation_data=(X_test, y_test), validation_batch_size=42, callbacks=[es])
+    time_dist_CNN_model = Sequential()
+    time_dist_CNN_model.add(TimeDistributed(CNN_model, input_shape=(sequence_len, 70, 50, 3)))
+
+    model = Sequential()
+    model.add(time_dist_CNN_model)              #  이대로 하면 LSTM에 입력되는 데이터가 (batch_size, timesteps, height, width, chanels) (5차원)
+    model.add(TimeDistributed(Flatten()))       #  LSTM에 입력되는 데이터의 형태가 (batch_size, timesteps, features) (3차원)
+    model.add(LSTM(32,))
+    model.add(Dense(32, activation='swish'))
+    model.add(Dense(64, activation='swish'))
+    model.add(Dense(128, activation='swish'))
+    model.add(Dense(256, activation='swish'))
+    model.add(Dense(64, activation='swish'))
+    model.add(Dense(length, activation='softmax'))
+    # batch_normalizaton 추가 예정
+    model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+    return model
+
+X1, X2, y1, y2 = train_test_split(X_train, y_train, stratify=y_train, random_state=42, test_size=0.5)
+
+X1, X2, X3, X4, y1, y2, y3, y4 = train_test_split(X1, X2, y1, y2, stratify=y_train, random_state=42, test_size=0.5)
+es = EarlyStopping(monitor='val_loss', patience=10, verbose=1, mode='min', restore_best_weights=True)
+
+model1 = create_model()
+model1.fit(X1, y1, epochs=5, batch_size=10, shuffle=True, callbacks=[es], validation_split=0.2)
+
+model2 = create_model()
+model2.fit(X2, y2, epochs=5, batch_size=10, shuffle=True, callbacks=[es], validation_split=0.2)
+
+model3 = create_model()
+model3.fit(X3, y3, epochs=5, batch_size=10, shuffle=True, callbacks=[es], validation_split=0.2)
+
+model4 = create_model()
+model4.fit(X4, y4, epochs=5, batch_size=10, shuffle=True, callbacks=[es], validation_split=0.2)
+
+model1.save('model1.h5')
+model2.save('model2.h5')
+model3.save('model3.h5')
+model4.save('model4.h5')
 
 
-y_pred = model.predict(X_test)
+def ensemble(models, data):
+    predictions = [model.predict(data) for model in models]
+    return np.mean(predictions, axis=0) # softmax의 확률들을 평균
+    
+
+y_pred = ensemble([model1, model2, model3, model4], X_test)
 y_pred = np.argmax(y_pred, axis=1)
 
 def seperate_pred(y_pred, fs):
