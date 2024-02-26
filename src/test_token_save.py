@@ -11,6 +11,7 @@ from sklearn.metrics import f1_score, accuracy_score
 from keras.callbacks import EarlyStopping
 import matplotlib.pyplot as plt
 from collections import Counter
+import json
 
 start_time = time.time()
 
@@ -100,6 +101,17 @@ np.save( "../resource/X_train.npy", X_train)
 np.save( "../resource/X_test.npy", X_test)
 np.save( "../resource/y_train.npy", y_train)
 np.save( "../resource/y_test.npy", y_test)
+
+def reverse_dict_mapping(input_dict):
+    reversed_dict = dict(zip(input_dict.values(), input_dict.keys()))
+    return reversed_dict
+train_data_map = reverse_dict_mapping(train_data.class_indices)
+test_data_map = reverse_dict_mapping(test_data.class_indices)
+
+with open('train_data_map.json', 'w') as json_file:
+    json.dump(train_data_map, json_file)
+with open('test_data_map.json', 'w') as json_file:
+    json.dump(test_data_map, json_file)
 
 end_time = time.time()
 print("걸린 시간 : ", round(end_time - start_time), "초")
