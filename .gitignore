@@ -7,3 +7,4 @@
 src/연습장.py
 *.json
 *.h5
+*.npy
