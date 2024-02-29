@@ -96,6 +96,10 @@ X_test = X_test.reshape(-1, frame_size ,70, 50, 3)
 print("test data")
 print(X_test.shape, y_test.shape)
 
+from sklearn.model_selection import train_test_split
+print("split")
+X_train, _ , y_train , _ = train_test_split(X_train, y_train, stratify=y_train, random_state=42, test_size=0.4)
+print("split")
 
 np.save( "../resource/X_train.npy", X_train)
 np.save( "../resource/X_test.npy", X_test)
