@@ -9,3 +9,7 @@ src/연습장.py
 *.h5
 *.npy
 src/jumpingjack.gif
+*.index
+*.data-00000-of-00001
+resource/w/movinet_a0_stream/checkpoint
+resource/w/movinet_a0_base/checkpoint

@@ -14,8 +14,8 @@ def standardize_resolution(input_dir, output_dir, target_resolution, csv):
 
 # 디렉토리 경로 및 원하는 해상도 설정
 input_directory = '..//resource//video'
-output_directory = '..//resource//video_standardized_7050'
-target_resolution = (70, 50)
+output_directory = '..//resource//video_standardized_320'
+target_resolution = (320, 320)
 csv = pd.read_csv('../resource/tokend_word.csv')
 csv['번호'] = csv['번호'].astype(str) + '.mp4'
 print(csv)
