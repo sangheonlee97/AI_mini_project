@@ -274,21 +274,6 @@ test_ds = test_ds.batch(batch_size)
 for frames, labels in train_ds.take(10):
   print(labels)
   
-  
-# print(f"Shape: {frames.shape}")
-# print(f"Label: {labels.shape}")
-
-gru = layers.GRU(units=4, return_sequences=True, return_state=True)
-
-inputs = tf.random.normal(shape=[1, 10, 8]) # (batch, sequence, channels)
-
-result, state = gru(inputs) # Run it all at once
-
-first_half, state = gru(inputs[:, :5, :])   # run the first half, and capture the state
-second_half, _ = gru(inputs[:,5:, :], initial_state=state)  # Use the state to continue where you left off.
-
-print(np.allclose(result[:, :5,:], first_half))
-print(np.allclose(result[:, 5:,:], second_half))
 
 model_id = 'a0'
 resolution = 174
@@ -306,7 +291,7 @@ model.build([None, None, None, None, 3])
 # !wget https://storage.googleapis.com/tf_model_garden/vision/movinet/movinet_a0_base.tar.gz -O movinet_a0_base.tar.gz -q
 # !tar -xvf movinet_a0_base.tar.gz
 
-# checkpoint_dir = f'movinet_{model_id}_base'
+checkpoint_dir = f'movinet_{model_id}_base'
 checkpoint_dir = 'C:\\Users\\AIA\\Desktop\\ai\\AI_mini_project\\resource\\w\\movinet_a0_base'
 checkpoint_path = tf.train.latest_checkpoint(checkpoint_dir)
 checkpoint = tf.train.Checkpoint(model=model)
@@ -324,7 +309,7 @@ def build_classifier(batch_size, num_frames, resolution, backbone, num_classes):
 
 model = build_classifier(batch_size, num_frames, resolution, backbone, 419)
 
-num_epochs = 50
+num_epochs = 40
 
 loss_obj = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 
@@ -332,18 +317,29 @@ optimizer = tf.keras.optimizers.Adam(learning_rate = 0.001)
 
 model.compile(loss=loss_obj, optimizer=optimizer, metrics=['accuracy'])
 
+model.summary()
+
 results = model.fit(train_ds,
                     validation_data=val_ds,
                     epochs=num_epochs,
                     validation_freq=1,
                     verbose=1)
 
+
+# 모델에 가중치 로드
+# model.load_weights('../movinet_gazua.h5')
+
 res = model.evaluate(test_ds, return_dict=True)
 print("결과 !!!!!!!!!!!!!!!!!!!!")
 print(res)
 print("결과 !!!!!!!!!!!!!!!!!!!!")
+
+print("가중치 저장!!!!")
+model.save_weights("../movinet_gazua_w.h5")
+model.save("../movinet_gazua_m.h5")
+print("가중치 저장!!!!")
 def get_actual_predicted_labels(dataset):
-  """
+  """f
     Create a list of actual ground truth values and the predictions from the model.
 
     Args:
@@ -364,8 +360,8 @@ def get_actual_predicted_labels(dataset):
 def plot_confusion_matrix(actual, predicted, labels, ds_type):
   cm = tf.math.confusion_matrix(actual, predicted)
   ax = sns.heatmap(cm, annot=True, fmt='g')
-  sns.set_theme(rc={'figure.figsize':(12, 12)})
-  sns.set_theme(font_scale=1.4)
+  sns.set(rc={'figure.figsize':(12, 12)})
+  sns.set(font_scale=1.4)
   ax.set_title('Confusion matrix of action recognition for ' + ds_type)
   ax.set_xlabel('Predicted Action')
   ax.set_ylabel('Actual Action')
@@ -378,4 +374,6 @@ fg = FrameGenerator(subset_paths['train'], num_frames, training = True)
 label_names = list(fg.class_ids_for_name.keys())
 
 actual, predicted = get_actual_predicted_labels(test_ds)
-plot_confusion_matrix(actual, predicted, label_names, 'test')
+print("actural : ", actual)
+print("predict : ", predicted)
+# plot_confusion_matrix(actual, predicted, label_names, 'test')
