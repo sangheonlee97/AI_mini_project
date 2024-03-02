@@ -284,19 +284,19 @@ backbone = movinet.Movinet(model_id=model_id)
 backbone.trainable = False
 
 # Set num_classes=600 to load the pre-trained weights from the original model
-model = movinet_model.MovinetClassifier(backbone=backbone, num_classes=600)
+model = movinet_model.MovinetClassifier(backbone=backbone, num_classes=419)
 model.build([None, None, None, None, 3])
 
 # Load pre-trained weights
 # !wget https://storage.googleapis.com/tf_model_garden/vision/movinet/movinet_a0_base.tar.gz -O movinet_a0_base.tar.gz -q
 # !tar -xvf movinet_a0_base.tar.gz
 
-checkpoint_dir = f'movinet_{model_id}_base'
-checkpoint_dir = 'C:\\Users\\AIA\\Desktop\\ai\\AI_mini_project\\resource\\w\\movinet_a0_base'
-checkpoint_path = tf.train.latest_checkpoint(checkpoint_dir)
-checkpoint = tf.train.Checkpoint(model=model)
-status = checkpoint.restore(checkpoint_path)
-status.assert_existing_objects_matched()
+# checkpoint_dir = f'movinet_{model_id}_base'
+# checkpoint_dir = 'C:\\Users\\AIA\\Desktop\\ai\\AI_mini_project\\resource\\w\\movinet_a0_base'
+# checkpoint_path = tf.train.latest_checkpoint(checkpoint_dir)
+# checkpoint = tf.train.Checkpoint(model=model)
+# status = checkpoint.restore(checkpoint_path)
+# status.assert_existing_objects_matched()
 
 def build_classifier(batch_size, num_frames, resolution, backbone, num_classes):
   """Builds a classifier on top of a backbone model."""
@@ -335,8 +335,8 @@ print(res)
 print("결과 !!!!!!!!!!!!!!!!!!!!")
 
 print("가중치 저장!!!!")
-model.save_weights("../movinet_gazua_w.h5")
-model.save("../movinet_gazua_m.h5")
+model.save_weights("../movinet_gazua_w2.h5")
+model.save("../movinet_gazua_m2.h5")
 print("가중치 저장!!!!")
 def get_actual_predicted_labels(dataset):
   """f
