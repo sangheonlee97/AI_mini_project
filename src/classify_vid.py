@@ -21,8 +21,8 @@ def classify_videos(input_dir, output_dir, map_csv):
 
 # Example usage:
 csv_path = 'C:\\Users\\AIA\\Desktop\\ai\\AI_mini_project\\resource\\tokend_word.csv'
-video_dir = 'C:\\Users\\AIA\\Desktop\\ai\\AI_mini_project\\resource\\video_standardized_320320\\'
-output_dir = 'C:\\Users\\AIA\\Desktop\\ai\\AI_mini_project\\resource\\classified_video_320\\'
+video_dir = 'C:\\Users\\AIA\\Desktop\\ai\\AI_mini_project\\resource\\video_standardized_174\\'
+output_dir = 'C:\\Users\\AIA\\Desktop\\ai\\AI_mini_project\\resource\\classified_video_174\\'
 df = pd.read_csv(csv_path)
 
 classify_videos(video_dir, output_dir, df)

@@ -246,12 +246,12 @@ URL = 'https://storage.googleapis.com/thumos14_files/UCF101_videos.zip'
 #                         splits = {"train": 30, "test": 20}, 
 #                         download_dir = download_dir)
 
-train_path = pathlib.Path("C:\\Users\\AIA\\Desktop\\ai\\AI_mini_project\\resource\\download_dir\\train")
-test_path = pathlib.Path("C:\\Users\\AIA\\Desktop\\ai\\AI_mini_project\\resource\\download_dir\\test")
-val_ds = pathlib.Path("C:\\Users\\AIA\\Desktop\\ai\\AI_mini_project\\resource\\download_dir\\val")
+train_path = pathlib.Path("C:\\Users\\AIA\\Desktop\\ai\\AI_mini_project\\resource\\real\\train")
+test_path = pathlib.Path("C:\\Users\\AIA\\Desktop\\ai\\AI_mini_project\\resource\\real\\test")
+# val_ds = pathlib.Path("C:\\Users\\AIA\\Desktop\\ai\\AI_mini_project\\resource\\download_dir\\val")
 subset_paths = { 'train' :  train_path,
                 'test' :  test_path,
-                'val' : val_ds
+                # 'val' : val_ds
                 }
 
 batch_size = 5
@@ -259,9 +259,9 @@ num_frames = 200
 output_signature = (tf.TensorSpec(shape = (None, None, None, 3), dtype = tf.float32),
                     tf.TensorSpec(shape = (), dtype = tf.int16))
 # print("dllfkjasdfl: ",subset_paths['train'])
-# train_ds = tf.data.Dataset.from_generator(FrameGenerator(subset_paths['train'], num_frames, training = False),
-#                                           output_signature = output_signature)
-# train_ds = train_ds.batch(batch_size)
+train_ds = tf.data.Dataset.from_generator(FrameGenerator(subset_paths['train'], num_frames, training = False),
+                                          output_signature = output_signature)
+train_ds = train_ds.batch(batch_size)
 
 # val_ds = tf.data.Dataset.from_generator(FrameGenerator(subset_paths['val'], num_frames, training = False),
 #                                           output_signature = output_signature)
@@ -271,9 +271,16 @@ test_ds = tf.data.Dataset.from_generator(FrameGenerator(subset_paths['test'], nu
                                          output_signature = output_signature)
 test_ds = test_ds.batch(batch_size)
 
-# for frames, labels in train_ds.take(10):
-#   print(labels)
-  
+for frames, labels in test_ds.take(10):
+  print("labels : ",labels)
+import os  
+train_CLASSES = sorted(os.listdir("C:\\Users\\AIA\\Desktop\\ai\\AI_mini_project\\resource\\real\\train"))
+test_CLASSES = sorted(os.listdir("C:\\Users\\AIA\\Desktop\\ai\\AI_mini_project\\resource\\real\\test"))
+
+train_class_mapping = {i: class_name for i, class_name in enumerate(train_CLASSES)}
+test_class_mapping = {i: class_name for i, class_name in enumerate(test_CLASSES)}
+
+print(test_class_mapping)
 
 model_id = 'a0'
 resolution = 174
@@ -292,11 +299,11 @@ model.build([None, None, None, None, 3])
 # !tar -xvf movinet_a0_base.tar.gz
 
 # checkpoint_dir = f'movinet_{model_id}_base'
-# checkpoint_dir = 'C:\\Users\\AIA\\Desktop\\ai\\AI_mini_project\\resource\\w\\movinet_a0_base'
-# checkpoint_path = tf.train.latest_checkpoint(checkpoint_dir)
-# checkpoint = tf.train.Checkpoint(model=model)
-# status = checkpoint.restore(checkpoint_path)
-# status.assert_existing_objects_matched()
+checkpoint_dir = 'C:\\Users\\AIA\\Desktop\\ai\\AI_mini_project\\resource\\w\\movinet_a0_base'
+checkpoint_path = tf.train.latest_checkpoint(checkpoint_dir)
+checkpoint = tf.train.Checkpoint(model=model)
+status = checkpoint.restore(checkpoint_path)
+status.assert_existing_objects_matched()
 
 def build_classifier(batch_size, num_frames, resolution, backbone, num_classes):
   """Builds a classifier on top of a backbone model."""
@@ -319,25 +326,25 @@ model.compile(loss=loss_obj, optimizer=optimizer, metrics=['accuracy'])
 
 model.summary()
 
-# results = model.fit(train_ds,
-#                     validation_data=val_ds,
-#                     epochs=num_epochs,
-#                     validation_freq=1,
-#                     verbose=1)
+results = model.fit(train_ds,
+                    # validation_data=val_ds,
+                    epochs=num_epochs,
+                    # validation_freq=1,
+                    verbose=1)
 
 
 # 모델에 가중치 로드
-model.load_weights('../movinet_gazua_m.h5')
+# model.load_weights('../movinet_gazua_w.h5')
 
 res = model.evaluate(test_ds, return_dict=True)
 print("결과 !!!!!!!!!!!!!!!!!!!!")
 print(res)
 print("결과 !!!!!!!!!!!!!!!!!!!!")
 
-# print("가중치 저장!!!!")
-# model.save_weights("../movinet_gazua_w2.h5")
-# model.save("../movinet_gazua_m2.h5")
-# print("가중치 저장!!!!")
+print("가중치 저장!!!!")
+model.save_weights("../movinet_real_w.h5")
+model.save("../movinet_real_m.h5")
+print("가중치 저장!!!!")
 def get_actual_predicted_labels(dataset):
   """f
     Create a list of actual ground truth values and the predictions from the model.
@@ -374,6 +381,30 @@ fg = FrameGenerator(subset_paths['train'], num_frames, training = True)
 label_names = list(fg.class_ids_for_name.keys())
 
 actual, predicted = get_actual_predicted_labels(test_ds)
-print("actural : ", actual)
-print("predict : ", predicted)
+
+def return_real_word(y_pred, map):      # 폴더 순서대로 분류돼있던 클래스를  디렉토리 이름으로 변환해주는 함수
+    temp = []
+    for v in y_pred:
+        temp.append(map[int(v)])
+    return np.array(temp)
+predict_num = predicted.numpy()
+actual_num = actual.numpy()
+
+y_pred = return_real_word(predict_num, train_class_mapping)
+y_test = return_real_word(actual_num, test_class_mapping)
+
+from sklearn.metrics import accuracy_score
+acc = accuracy_score(y_test, y_pred)
+
+import json
+with open('token_dic.json', 'r') as json_file:          ### 딕셔너리 불러오기
+    token_dic = json.load(json_file)
+flipped_dict = {v: k for k, v in token_dic.items()}
+
+y_pred = return_real_word(y_pred, flipped_dict)
+y_test = return_real_word(y_test, flipped_dict)
+
+print("실제 데이터 : ", y_test)
+print("예측 데이터 : ", y_pred)
+print("acc : ", acc)
 # plot_confusion_matrix(actual, predicted, label_names, 'test')
