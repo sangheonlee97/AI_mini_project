@@ -271,8 +271,8 @@ test_ds = tf.data.Dataset.from_generator(FrameGenerator(subset_paths['test'], nu
                                          output_signature = output_signature)
 test_ds = test_ds.batch(batch_size)
 
-for frames, labels in test_ds.take(10):
-  print("labels : ",labels)
+# for frames, labels in test_ds.take(10):
+#   print("labels : ",labels)
 import os  
 train_CLASSES = sorted(os.listdir("C:\\Users\\AIA\\Desktop\\ai\\AI_mini_project\\resource\\real\\train"))
 test_CLASSES = sorted(os.listdir("C:\\Users\\AIA\\Desktop\\ai\\AI_mini_project\\resource\\real\\test"))
@@ -299,11 +299,11 @@ model.build([None, None, None, None, 3])
 # !tar -xvf movinet_a0_base.tar.gz
 
 # checkpoint_dir = f'movinet_{model_id}_base'
-checkpoint_dir = 'C:\\Users\\AIA\\Desktop\\ai\\AI_mini_project\\resource\\w\\movinet_a0_base'
-checkpoint_path = tf.train.latest_checkpoint(checkpoint_dir)
-checkpoint = tf.train.Checkpoint(model=model)
-status = checkpoint.restore(checkpoint_path)
-status.assert_existing_objects_matched()
+# checkpoint_dir = 'C:\\Users\\AIA\\Desktop\\ai\\AI_mini_project\\resource\\w\\movinet_a0_base'
+# checkpoint_path = tf.train.latest_checkpoint(checkpoint_dir)
+# checkpoint = tf.train.Checkpoint(model=model)
+# status = checkpoint.restore(checkpoint_path)
+# status.assert_existing_objects_matched()
 
 def build_classifier(batch_size, num_frames, resolution, backbone, num_classes):
   """Builds a classifier on top of a backbone model."""
@@ -316,7 +316,7 @@ def build_classifier(batch_size, num_frames, resolution, backbone, num_classes):
 
 model = build_classifier(batch_size, num_frames, resolution, backbone, 419)
 
-num_epochs = 40
+num_epochs = 10
 
 loss_obj = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 
@@ -324,7 +324,8 @@ optimizer = tf.keras.optimizers.Adam(learning_rate = 0.001)
 
 model.compile(loss=loss_obj, optimizer=optimizer, metrics=['accuracy'])
 
-model.summary()
+# 모델에 가중치 로드
+model.load_weights(("../movinet_real_w2.h5"))
 
 results = model.fit(train_ds,
                     # validation_data=val_ds,
@@ -333,17 +334,15 @@ results = model.fit(train_ds,
                     verbose=1)
 
 
-# 모델에 가중치 로드
-# model.load_weights('../movinet_gazua_w.h5')
 
-res = model.evaluate(test_ds, return_dict=True)
-print("결과 !!!!!!!!!!!!!!!!!!!!")
-print(res)
-print("결과 !!!!!!!!!!!!!!!!!!!!")
+# res = model.evaluate(test_ds, return_dict=True)
+# print("결과 !!!!!!!!!!!!!!!!!!!!")
+# print(res)
+# print("결과 !!!!!!!!!!!!!!!!!!!!")
 
 print("가중치 저장!!!!")
-model.save_weights("../movinet_real_w.h5")
-model.save("../movinet_real_m.h5")
+model.save_weights("../movinet_real_w3.h5")
+model.save("../movinet_real_m3.h5")
 print("가중치 저장!!!!")
 def get_actual_predicted_labels(dataset):
   """f
