@@ -325,13 +325,13 @@ optimizer = tf.keras.optimizers.Adam(learning_rate = 0.001)
 model.compile(loss=loss_obj, optimizer=optimizer, metrics=['accuracy'])
 
 # 모델에 가중치 로드
-model.load_weights(("../movinet_real_w2.h5"))
+model.load_weights(("../movinet_real_w3.h5"))
 
-results = model.fit(train_ds,
-                    # validation_data=val_ds,
-                    epochs=num_epochs,
-                    # validation_freq=1,
-                    verbose=1)
+# results = model.fit(train_ds,
+#                     # validation_data=val_ds,
+#                     epochs=num_epochs,
+#                     # validation_freq=1,
+#                     verbose=1)
 
 
 
@@ -340,10 +340,10 @@ results = model.fit(train_ds,
 # print(res)
 # print("결과 !!!!!!!!!!!!!!!!!!!!")
 
-print("가중치 저장!!!!")
-model.save_weights("../movinet_real_w3.h5")
-model.save("../movinet_real_m3.h5")
-print("가중치 저장!!!!")
+# print("가중치 저장!!!!")
+# model.save_weights("../movinet_real_w3.h5")
+# model.save("../movinet_real_m3.h5")
+# print("가중치 저장!!!!")
 def get_actual_predicted_labels(dataset):
   """f
     Create a list of actual ground truth values and the predictions from the model.
@@ -406,4 +406,4 @@ y_test = return_real_word(y_test, flipped_dict)
 print("실제 데이터 : ", y_test)
 print("예측 데이터 : ", y_pred)
 print("acc : ", acc)
-# plot_confusion_matrix(actual, predicted, label_names, 'test')
+plot_confusion_matrix(actual, predicted, label_names, 'test')
