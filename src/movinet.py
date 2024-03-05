@@ -363,18 +363,7 @@ def get_actual_predicted_labels(dataset):
 
   return actual, predicted
 
-def plot_confusion_matrix(actual, predicted, labels, ds_type):
-  cm = tf.math.confusion_matrix(actual, predicted)
-  ax = sns.heatmap(cm, annot=True, fmt='g')
-  sns.set(rc={'figure.figsize':(12, 12)})
-  sns.set(font_scale=1.4)
-  ax.set_title('Confusion matrix of action recognition for ' + ds_type)
-  ax.set_xlabel('Predicted Action')
-  ax.set_ylabel('Actual Action')
-  plt.xticks(rotation=90)
-  plt.yticks(rotation=0)
-  ax.xaxis.set_ticklabels(labels)
-  ax.yaxis.set_ticklabels(labels)
+
   
 fg = FrameGenerator(subset_paths['train'], num_frames, training = True)
 label_names = list(fg.class_ids_for_name.keys())
@@ -396,7 +385,7 @@ from sklearn.metrics import accuracy_score
 acc = accuracy_score(y_test, y_pred)
 
 import json
-with open('token_dic.json', 'r') as json_file:          ### 딕셔너리 불러오기
+with open('token_dic.json', 'r', encoding = 'utf-8') as json_file:          ### 딕셔너리 불러오기
     token_dic = json.load(json_file)
 flipped_dict = {v: k for k, v in token_dic.items()}
 
@@ -406,4 +395,79 @@ y_test = return_real_word(y_test, flipped_dict)
 print("실제 데이터 : ", y_test)
 print("예측 데이터 : ", y_pred)
 print("acc : ", acc)
-plot_confusion_matrix(actual, predicted, label_names, 'test')
+
+#==============================
+from PIL import ImageFont, ImageDraw, Image
+from pathlib import Path
+import numpy as np
+import cv2
+
+
+# def get_label_for_video(y_test, y_pred, label_source):
+#     actual_label = label_source[y_test]
+#     predicted_label = label_source[y_pred]
+#     return actual_label, predicted_label
+
+
+
+def draw_text_on_frame(frame, text, position, font_path, font_size, font_color):
+    frame_pil = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+    draw = ImageDraw.Draw(frame_pil)
+    font = ImageFont.truetype(font_path, font_size)
+    draw.text(position, text, font=font, fill=font_color)
+    return cv2.cvtColor(np.array(frame_pil), cv2.COLOR_RGB2BGR)
+
+
+def find_first_video_files_and_labels(folder_path):
+    video_paths = []
+    base_path = Path(folder_path)
+    for subfolder in base_path.iterdir():
+        if subfolder.is_dir():
+            video_files = list(subfolder.glob('*.mp4'))
+            if video_files:
+                video_paths.append(str(video_files[0]))  # 첫 번째 비디오 파일 추가
+                
+                
+    return video_paths
+# 비디오 파일과 라벨을 함께 추출
+video_paths = find_first_video_files_and_labels(test_path)
+predicted_labels = y_pred.copy()
+
+
+    
+# 라벨 매핑 파일 로드
+
+
+# font_path = "C:\\Users\\user\\Downloads\\nanum-all\\나눔 글꼴\\나눔고딕에코\\NanumFontSetup_TTF_GOTHICECO\\NanumGothicEco.ttf"
+font_path = "C:\\Users\\AIA\\Documents\\카카오톡 받은 파일\\NanumGothicEco.ttf"
+
+
+
+def play_videos_with_korean_labels(video_paths, actual_labels, predicted_labels, font_path):
+    for index, video_path in enumerate(video_paths):
+        cap = cv2.VideoCapture(video_path)
+        if not cap.isOpened():
+            print(f"Error opening video file: {video_path}")
+            continue
+
+        # 리스트의 인덱스를 사용하여 각 비디오에 맞는 라벨 찾기
+        actual_label = actual_labels[index]
+        predicted_label = predicted_labels[index]
+        
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if ret:
+                label_text = f"실제: {actual_label}, 예측: {predicted_label}"
+                frame = draw_text_on_frame(frame, label_text, (10, 10), font_path, 15, (255, 255, 255))
+                cv2.imshow('Video', frame)
+                
+                if cv2.waitKey(25) & 0xFF == ord('q'):
+                    break
+            else:
+                break
+                
+        cap.release()
+    cv2.destroyAllWindows()
+
+# 영상 재생 및 라벨 표시
+play_videos_with_korean_labels(video_paths, y_test, y_pred, font_path)
