@@ -364,10 +364,6 @@ def get_actual_predicted_labels(dataset):
   return actual, predicted
 
 
-  
-fg = FrameGenerator(subset_paths['train'], num_frames, training = True)
-label_names = list(fg.class_ids_for_name.keys())
-
 actual, predicted = get_actual_predicted_labels(test_ds)
 
 def return_real_word(y_pred, map):      # 폴더 순서대로 분류돼있던 클래스를  디렉토리 이름으로 변환해주는 함수
@@ -381,7 +377,7 @@ actual_num = actual.numpy()
 y_pred = return_real_word(predict_num, train_class_mapping)
 y_test = return_real_word(actual_num, test_class_mapping)
 
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, f1_score
 acc = accuracy_score(y_test, y_pred)
 
 import json
@@ -402,14 +398,6 @@ from pathlib import Path
 import numpy as np
 import cv2
 
-
-# def get_label_for_video(y_test, y_pred, label_source):
-#     actual_label = label_source[y_test]
-#     predicted_label = label_source[y_pred]
-#     return actual_label, predicted_label
-
-
-
 def draw_text_on_frame(frame, text, position, font_path, font_size, font_color):
     frame_pil = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
     draw = ImageDraw.Draw(frame_pil)
@@ -426,48 +414,104 @@ def find_first_video_files_and_labels(folder_path):
             video_files = list(subfolder.glob('*.mp4'))
             if video_files:
                 video_paths.append(str(video_files[0]))  # 첫 번째 비디오 파일 추가
+                video_paths.append(str(video_files[1]))  # 두 번째 비디오 파일 추가
                 
                 
     return video_paths
-# 비디오 파일과 라벨을 함께 추출
+# # 비디오 파일과 라벨을 함께 추출
 video_paths = find_first_video_files_and_labels(test_path)
-predicted_labels = y_pred.copy()
+# predicted_labels = y_pred.copy()
 
 
     
-# 라벨 매핑 파일 로드
+# # 라벨 매핑 파일 로드
 
 
-# font_path = "C:\\Users\\user\\Downloads\\nanum-all\\나눔 글꼴\\나눔고딕에코\\NanumFontSetup_TTF_GOTHICECO\\NanumGothicEco.ttf"
+# # font_path = "C:\\Users\\user\\Downloads\\nanum-all\\나눔 글꼴\\나눔고딕에코\\NanumFontSetup_TTF_GOTHICECO\\NanumGothicEco.ttf"
 font_path = "C:\\Users\\AIA\\Documents\\카카오톡 받은 파일\\NanumGothicEco.ttf"
 
+# import time
 
+# def play_videos_with_korean_labels(video_paths, actual_labels, predicted_labels, font_path):
+#     for index, video_path in enumerate(video_paths):
+#         cap = cv2.VideoCapture(video_path)
+#         if not cap.isOpened():
+#             print(f"Error opening video file: {video_path}")
+#             continue
 
-def play_videos_with_korean_labels(video_paths, actual_labels, predicted_labels, font_path):
+#         # 리스트의 인덱스를 사용하여 각 비디오에 맞는 라벨 찾기
+#         actual_label = actual_labels[index]
+#         predicted_label = predicted_labels[index]
+#         fc = 0
+#         while cap.isOpened() or fc > 95:
+#             ret, frame = cap.read()
+#             if ret:
+#                 if fc < 80:
+#                   label_text = f"실제: {actual_label}"#\n예측: {predicted_label}"
+#                 else:
+#                   label_text = f"실제: {actual_label}\n예측: {predicted_label}"
+#                 frame = cv2.resize(frame, (500,500))
+#                 frame = draw_text_on_frame(frame, label_text, (10, 10), font_path, 30, (255, 255, 255))
+#                 cv2.imshow('Video', frame)
+#                 temp = frame
+#                 if cv2.waitKey(25) & 0xFF == ord('q'):
+#                     break
+#             else:
+#                 if fc < 80:
+#                   label_text = f"실제: {actual_label}"#\n예측: {predicted_label}"
+#                 else:
+#                   label_text = f"실제: {actual_label}\n예측: {predicted_label}"
+#                 temp = draw_text_on_frame(temp, label_text, (10, 10), font_path, 30, (255, 255, 255))
+                
+#                 cv2.imshow('Video', temp)
+#                 time.sleep(np.abs((100-fc)/30))
+#                 if cv2.waitKey(25) & 0xFF == ord('q'):
+#                     break
+#                 break
+#             fc += 1
+                
+#         cap.release()
+#     cv2.destroyAllWindows()
+
+# # 영상 재생 및 라벨 표시
+# play_videos_with_korean_labels(video_paths, y_test, y_pred, font_path)
+
+###################
+
+def play_videos_with_korean_labels(video_paths, actual_labels, predicted_labels, font_path, delay_frames_from_end=30):
     for index, video_path in enumerate(video_paths):
         cap = cv2.VideoCapture(video_path)
         if not cap.isOpened():
             print(f"Error opening video file: {video_path}")
             continue
 
-        # 리스트의 인덱스를 사용하여 각 비디오에 맞는 라벨 찾기
-        actual_label = actual_labels[index]
-        predicted_label = predicted_labels[index]
-        
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))  # 비디오의 전체 프레임 수
+        frame_count = 0  # 현재 프레임 번호를 추적하기 위한 카운터
+        show_prediction_from_frame = max(0, total_frames - delay_frames_from_end)  # 예측 라벨 표시 시작 프레임 번호
+
         while cap.isOpened():
             ret, frame = cap.read()
             if ret:
-                label_text = f"실제: {actual_label}, 예측: {predicted_label}"
-                frame = draw_text_on_frame(frame, label_text, (10, 10), font_path, 15, (255, 255, 255))
+                frame = cv2.resize(frame, (500, 500))  # 프레임 크기 조정
+
+                if frame_count < show_prediction_from_frame:
+                    # 예측 라벨 표시 시작 프레임에 도달하기 전에는 실제 라벨만 표시
+                    label_text = f"실제: {actual_labels[index]}"
+                else:
+                    # 예측 라벨 표시 시작 프레임 이후에는 실제와 예측 라벨 모두 표시
+                    label_text = f"실제: {actual_labels[index]}\n예측: {predicted_labels[index]}"
+
+                frame = draw_text_on_frame(frame, label_text, (10, 30), font_path, 30, (255, 255, 255))
+
                 cv2.imshow('Video', frame)
-                
                 if cv2.waitKey(25) & 0xFF == ord('q'):
                     break
+
+                frame_count += 1  # 프레임 번호 업데이트
             else:
                 break
-                
+
         cap.release()
     cv2.destroyAllWindows()
-
-# 영상 재생 및 라벨 표시
-play_videos_with_korean_labels(video_paths, y_test, y_pred, font_path)
+    
+play_videos_with_korean_labels(video_paths, y_test, y_pred, font_path,) 
